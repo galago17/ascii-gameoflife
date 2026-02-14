@@ -100,7 +100,7 @@
           (loop for x from (1- (min-x)) to (1+ max-x) do
                 ,action)
           ,@(when action2 (list action2)))))
-
+#|
 (defun print-grid ()
   (iterate-grid 
     (if (access (vector x y))
@@ -108,8 +108,21 @@
                     (princ *deadchar*))
     (format t "~%")))
 
+|#
+(defun print-grid ()
+  (loop for y from (max-y) downto (min-y) do
+        (if (member y (mapcar #'gety *grid*))
+            (progn 
+              (loop for x from (min-x) to (max-x) do
+                         (if (access (vector x y))
+                             (princ *alivechar*)
+                             (princ *deadchar*)))
+              (format t "~%"))
+            (format t "~a~%" (make-string (max-x) :initial-element *deadchar*)))))
+
 (defparameter *lastgrid* (list))
-(defparameter *stop* 0)
+(defparameter *stop* 0) ; generation to stop at
+(defparameter *delay* nil)
 
 (defun main (&optional (counter 0))
   (if (and (> *stop* 0) (>= counter *stop*)) (return-from main))
@@ -118,6 +131,8 @@
   ; (format t "~{~a~%~}" *grid*)
   (format t "~a, ~a x ~a, ~a alive" counter (1+ (max-x)) (1+ (max-y)) (length *grid*))
   (if (and (> *stop* 0) (>= counter *stop*)) (return-from main))
+
+  (when *delay* (sleep *delay*)) ; to reduce flickering
   (format t "~c[2J" #\Esc)
   (generation)
   ; (format t "~a~%" counter)
