@@ -82,16 +82,21 @@
           (t nil))))
 
 (defun generation ()
-  (let ((newgrid (list))
-        (undead (remove-duplicates (mapcan #'get-adjacent *grid*) :test #'equalp)))
-    (loop for coord in *grid* do
-          (when (lives-p coord)
-            (setf newgrid (cons coord newgrid))))
-    (loop for coord in undead do
-          (when (lives-p coord)
-            (setf newgrid (cons coord newgrid))))
-    (setf *grid* (remove-duplicates newgrid :test #'equalp))
-    undead))
+  (let ((max-x (max-x))
+        (max-y (max-y))
+        (newgrid (list)))
+    #|
+    (setf *grid* 
+          (mapcar (lambda (coord) 
+                    (vector (1+ (getx coord)) (1+ (gety coord))))
+                         *grid*))
+    |#
+    (loop for y from (1+ max-y) downto (1- (min-y)) do
+          (loop for x from (1- (min-x)) to (1+ max-x) do
+                ; (format t "(~a, ~a) ~a~%" x y (not (not (lives-p (vector x y)))))
+                (when (lives-p (vector x y))
+                    (setf newgrid (cons (vector x y) newgrid)))))
+    (setf *grid* newgrid)))
 
 (defmacro iterate-grid (action &optional action2)
   `(let ((max-x (max-x))
@@ -115,13 +120,12 @@
   (if (and (> *stop* 0) (>= counter *stop*)) (return-from main))
   (when (null *grid*) (return-from main))
   (print-grid)
-  ; (format t "~{~a~%~}" *grid*)
-  (format t "~a, ~a x ~a, ~a alive" counter (1+ (max-x)) (1+ (max-y)) (length *grid*))
-  (if (and (> *stop* 0) (>= counter *stop*)) (return-from main))
+  (sleep 0.01)
+  (format t "~a, ~a x ~a" counter (max-x) (max-y))
   (format t "~c[2J" #\Esc)
-  (generation)
   ; (format t "~a~%" counter)
   ; (format t "~a~%" (generation))
+  (generation)
   (if (equal *grid* *lastgrid*)
       nil
       (progn
